@@ -14,7 +14,6 @@
 #include <vector>
 
 #include "galkin_d_multidim_integrals_rectangles/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace galkin_d_multidim_integrals_rectangles {
 
@@ -98,7 +97,7 @@ bool GalkinDMultidimIntegralsRectanglesTBB::RunImpl() {
       local_sum += func(x);
     }
     return local_sum;
-  }, std::plus<double>());
+  }, std::plus<>());
 
   GetOutput() = sum * cell_v;
 
