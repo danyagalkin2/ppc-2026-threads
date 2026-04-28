@@ -131,16 +131,19 @@ TEST(GalkinDStlDirectTests, RunSucceedsWhenNumThreadsEnvIsZeroOrNegative) {
   EXPECT_NEAR(output, 1.0, 1e-9);
 }
 
+namespace {
+bool RunPipeline(BaseTask &task) {
+  return task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing();
+}
+}  // namespace
+
 TEST(GalkinDStlDirectTests, RunProducesCorrect1DIntegral) {
   const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &x) {
     return x[0] * x[0];
   };
   InType input = MakeInput(func, {{0.0, 1.0}}, 1000);
   GalkinDMultidimIntegralsRectanglesSTL task(input);
-  ASSERT_TRUE(task.Validation());
-  ASSERT_TRUE(task.PreProcessing());
-  ASSERT_TRUE(task.Run());
-  ASSERT_TRUE(task.PostProcessing());
+  ASSERT_TRUE(RunPipeline(task));
   EXPECT_NEAR(task.GetOutput(), 1.0 / 3.0, 1e-4);
 }
 
@@ -150,10 +153,7 @@ TEST(GalkinDStlDirectTests, RunProducesCorrect2DIntegral) {
   };
   InType input = MakeInput(func, {{0.0, 1.0}, {0.0, 1.0}}, 200);
   GalkinDMultidimIntegralsRectanglesSTL task(input);
-  ASSERT_TRUE(task.Validation());
-  ASSERT_TRUE(task.PreProcessing());
-  ASSERT_TRUE(task.Run());
-  ASSERT_TRUE(task.PostProcessing());
+  ASSERT_TRUE(RunPipeline(task));
   EXPECT_NEAR(task.GetOutput(), 1.0, 1e-4);
 }
 
@@ -164,16 +164,10 @@ TEST(GalkinDStlDirectTests, ResultMatchesSeqForSinIntegral) {
   InType input = MakeInput(func, {{0.0, std::numbers::pi}}, 500);
 
   GalkinDMultidimIntegralsRectanglesSEQ seq_task(input);
-  ASSERT_TRUE(seq_task.Validation());
-  ASSERT_TRUE(seq_task.PreProcessing());
-  ASSERT_TRUE(seq_task.Run());
-  ASSERT_TRUE(seq_task.PostProcessing());
+  ASSERT_TRUE(RunPipeline(seq_task));
 
   GalkinDMultidimIntegralsRectanglesSTL stl_task(input);
-  ASSERT_TRUE(stl_task.Validation());
-  ASSERT_TRUE(stl_task.PreProcessing());
-  ASSERT_TRUE(stl_task.Run());
-  ASSERT_TRUE(stl_task.PostProcessing());
+  ASSERT_TRUE(RunPipeline(stl_task));
 
   EXPECT_NEAR(stl_task.GetOutput(), seq_task.GetOutput(), 1e-9);
 }
@@ -185,16 +179,10 @@ TEST(GalkinDStlDirectTests, ResultMatchesSeqFor3DIntegral) {
   InType input = MakeInput(func, {{0.0, 1.0}, {0.0, 2.0}, {0.0, 3.0}}, 50);
 
   GalkinDMultidimIntegralsRectanglesSEQ seq_task(input);
-  ASSERT_TRUE(seq_task.Validation());
-  ASSERT_TRUE(seq_task.PreProcessing());
-  ASSERT_TRUE(seq_task.Run());
-  ASSERT_TRUE(seq_task.PostProcessing());
+  ASSERT_TRUE(RunPipeline(seq_task));
 
   GalkinDMultidimIntegralsRectanglesSTL stl_task(input);
-  ASSERT_TRUE(stl_task.Validation());
-  ASSERT_TRUE(stl_task.PreProcessing());
-  ASSERT_TRUE(stl_task.Run());
-  ASSERT_TRUE(stl_task.PostProcessing());
+  ASSERT_TRUE(RunPipeline(stl_task));
 
   EXPECT_NEAR(stl_task.GetOutput(), seq_task.GetOutput(), 1e-9);
 }

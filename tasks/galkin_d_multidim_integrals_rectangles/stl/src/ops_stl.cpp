@@ -12,6 +12,38 @@
 #include "galkin_d_multidim_integrals_rectangles/common/include/common.hpp"
 #include "util/include/util.hpp"
 
+namespace {
+
+using Borders = std::vector<std::pair<double, double>>;
+
+bool ComputeGridParams(const Borders &borders, int n, std::vector<double> &h, double &cell_v) {
+  for (std::size_t i = 0; i < borders.size(); ++i) {
+    h[i] = (borders[i].second - borders[i].first) / static_cast<double>(n);
+    if (!(h[i] > 0.0) || !std::isfinite(h[i])) {
+      return false;
+    }
+    cell_v *= h[i];
+  }
+  return true;
+}
+
+bool ComputeTotalCells(std::size_t dim, int n, std::int64_t &out) {
+  std::size_t total = 1;
+  for (std::size_t i = 0; i < dim; ++i) {
+    if (total > (std::numeric_limits<std::size_t>::max() / static_cast<std::size_t>(n))) {
+      return false;
+    }
+    total *= static_cast<std::size_t>(n);
+  }
+  if (total > static_cast<std::size_t>(LLONG_MAX)) {
+    return false;
+  }
+  out = static_cast<std::int64_t>(total);
+  return true;
+}
+
+}  // namespace
+
 namespace galkin_d_multidim_integrals_rectangles {
 
 GalkinDMultidimIntegralsRectanglesSTL::GalkinDMultidimIntegralsRectanglesSTL(const InType &in) {
@@ -49,32 +81,19 @@ bool GalkinDMultidimIntegralsRectanglesSTL::RunImpl() {
 
   std::vector<double> h(dim);
   double cell_v = 1.0;
-
-  for (std::size_t i = 0; i < dim; ++i) {
-    h[i] = (borders[i].second - borders[i].first) / static_cast<double>(n);
-    if (!(h[i] > 0.0) || !std::isfinite(h[i])) {
-      return false;
-    }
-    cell_v *= h[i];
-  }
-
-  std::size_t total_cells = 1;
-  for (std::size_t i = 0; i < dim; ++i) {
-    if (total_cells > (std::numeric_limits<std::size_t>::max() / static_cast<std::size_t>(n))) {
-      return false;
-    }
-    total_cells *= static_cast<std::size_t>(n);
-  }
-  if (total_cells > static_cast<std::size_t>(LLONG_MAX)) {
+  if (!ComputeGridParams(borders, n, h, cell_v)) {
     return false;
   }
 
-  const auto total_i64 = static_cast<std::int64_t>(total_cells);
+  std::int64_t total_i64 = 0;
+  if (!ComputeTotalCells(dim, n, total_i64)) {
+    return false;
+  }
   const int requested = ppc::util::GetNumThreads();
   const int positive = (requested > 0) ? requested : 1;
-  const int cap = (total_cells > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+  const int cap = (total_i64 > static_cast<std::int64_t>(std::numeric_limits<int>::max()))
                       ? std::numeric_limits<int>::max()
-                      : static_cast<int>(total_cells);
+                      : static_cast<int>(total_i64);
   const int num_threads = std::min(positive, cap);
 
   std::vector<double> partial_sums(num_threads, 0.0);
