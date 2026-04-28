@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <limits>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "galkin_d_multidim_integrals_rectangles/common/include/common.hpp"

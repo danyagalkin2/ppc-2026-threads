@@ -230,8 +230,9 @@ TEST(GalkinDTbbDirectTests, RunSucceedsWithSingleThreadArena) {
       result = task.GetOutput();
     }
   });
+  const OutType output = result.value_or(std::numeric_limits<double>::quiet_NaN());
   ASSERT_TRUE(result.has_value());
-  EXPECT_NEAR(result.value(), 1.0, 1e-9);
+  EXPECT_NEAR(output, 1.0, 1e-9);
 }
 
 TEST_P(GalkinDRunFuncTests, MultiDimRectangleMethod) {
