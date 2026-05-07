@@ -87,10 +87,10 @@ bool GalkinDMultidimIntegralsRectanglesALL::RunImpl() {
       (static_cast<std::int64_t>(rank) * chunk) + std::min(static_cast<std::int64_t>(rank), rem);
   const std::int64_t mpi_end = mpi_begin + chunk + (static_cast<std::int64_t>(rank) < rem ? 1 : 0);
 
-  const int num_threads = std::max(1, ppc::util::GetNumThreads());
   double local_sum = 0.0;
 
-#pragma omp parallel for reduction(+ : local_sum) schedule(static) num_threads(num_threads) default(none) \
+#pragma omp parallel for reduction(+ : local_sum) schedule(static)     \
+    num_threads(std::max(1, ppc::util::GetNumThreads())) default(none) \
     shared(borders, h, dim, func, n, mpi_begin, mpi_end)
   for (std::int64_t linear_idx = mpi_begin; linear_idx < mpi_end; ++linear_idx) {
     std::vector<double> x(dim);
