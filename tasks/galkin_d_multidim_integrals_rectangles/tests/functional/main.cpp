@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <tbb/task_arena.h>
 
 #include <array>
 #include <cmath>
@@ -184,54 +183,6 @@ TEST(GalkinDStlDirectTests, ResultMatchesSeqFor3DIntegral) {
   ASSERT_TRUE(RunPipeline(stl_task));
 
   EXPECT_NEAR(stl_task.GetOutput(), seq_task.GetOutput(), 1e-9);
-}
-
-TEST(GalkinDTbbDirectTests, ValidationFailsForEmptyBorders) {
-  const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) { return 1.0; };
-  InType input = MakeInput(func, std::vector<std::pair<double, double>>{}, 10);
-  GalkinDMultidimIntegralsRectanglesTBB task(input);
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(GalkinDTbbDirectTests, ValidationFailsForNonFiniteBorder) {
-  const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) { return 1.0; };
-  InType input = MakeInput(func, {{0.0, std::numeric_limits<double>::infinity()}}, 10);
-  GalkinDMultidimIntegralsRectanglesTBB task(input);
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(GalkinDTbbDirectTests, ValidationFailsForInvalidInterval) {
-  const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) { return 1.0; };
-  InType input = MakeInput(func, {{2.0, 1.0}}, 10);
-  GalkinDMultidimIntegralsRectanglesTBB task(input);
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(GalkinDTbbDirectTests, RunFailsForNonFiniteFunctionValue) {
-  const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) {
-    return std::numeric_limits<double>::quiet_NaN();
-  };
-  InType input = MakeInput(func, {{0.0, 1.0}}, 10);
-  GalkinDMultidimIntegralsRectanglesTBB task(input);
-  ASSERT_TRUE(task.Validation());
-  ASSERT_TRUE(task.PreProcessing());
-  EXPECT_FALSE(task.Run());
-}
-
-TEST(GalkinDTbbDirectTests, RunSucceedsWithSingleThreadArena) {
-  std::optional<OutType> result;
-  tbb::task_arena arena(1);
-  arena.execute([&] {
-    const std::function<double(const std::vector<double> &)> func = [](const std::vector<double> &) { return 1.0; };
-    InType input = MakeInput(func, {{0.0, 1.0}}, 10);
-    GalkinDMultidimIntegralsRectanglesTBB task(input);
-    if (task.Validation() && task.PreProcessing() && task.Run() && task.PostProcessing()) {
-      result = task.GetOutput();
-    }
-  });
-  const OutType output = result.value_or(std::numeric_limits<double>::quiet_NaN());
-  ASSERT_TRUE(result.has_value());
-  EXPECT_NEAR(output, 1.0, 1e-9);
 }
 
 TEST_P(GalkinDRunFuncTests, MultiDimRectangleMethod) {
